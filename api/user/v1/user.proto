@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package user.v1;
+
+//import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "kratos-x509/api/user/v1;v1";
+
+service UserService {
+  rpc ListUser (google.protobuf.Empty) returns (ListUserReply) {}
+  rpc GetUser (GetUserRequest) returns (User) {}
+}
+
+message User {
+  optional uint64 id = 1;
+  optional string user_name = 2 [json_name = "user_name"];
+  optional string password = 3 [json_name = "password"];
+  optional string nick_name = 4 [json_name = "nick_name"];
+  optional string email = 5 [json_name = "email"];
+  repeated string roles = 6;
+  optional string token = 7;
+}
+
+message GetUserRequest {
+  string userName = 1;
+}
+
+message ListUserReply {
+  repeated User items = 1;
+  int32 total = 2;
+}
