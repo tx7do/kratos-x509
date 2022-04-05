@@ -38,7 +38,7 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, s *service.AdminService) *
 			handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
 			handlers.AllowedOrigins([]string{"*"}),
 		)),
-		http.TLSConfig(bootstrap.NewServerTlsConfig(dir+"/server.key", dir+"/server.crt", dir+"/ca.crt")),
+		http.TLSConfig(bootstrap.NewServerTlsConfig(dir+"/server.key", dir+"/server.crt", "")),
 	}
 	if c.Http.Network != "" {
 		opts = append(opts, http.Network(c.Http.Network))

@@ -37,6 +37,8 @@ func (info TLSInfo) ServerConfig() (*tls.Config, error) {
 
 	var cfg tls.Config
 	cfg.InsecureSkipVerify = info.InsecureSkipVerify
+	//cfg.ServerName = "host.docker.internal"
+	cfg.MinVersion = tls.VersionTLS13
 
 	tlsCert, err := tls.LoadX509KeyPair(info.CertFile, info.KeyFile)
 	if err != nil {
@@ -66,6 +68,8 @@ func (info TLSInfo) ServerConfig() (*tls.Config, error) {
 func (info TLSInfo) ClientConfig() (*tls.Config, error) {
 	var cfg tls.Config
 	cfg.InsecureSkipVerify = info.InsecureSkipVerify
+	//cfg.ServerName = "host.docker.internal"
+	cfg.MinVersion = tls.VersionTLS13
 
 	if info.CAFile != "" {
 		cp, err := newCertPool(info.CAFile)

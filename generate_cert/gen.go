@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"flag"
 	"log"
 	"math/big"
 	"net"
@@ -24,11 +25,21 @@ var (
 	privateKey   interface{}
 )
 
+var (
+	host      = flag.String("host", "localhost", "Comma-separated hostnames and IPs to generate a certificate for")
+	validFrom = flag.String("start-date", "", "Creation date formatted as Jan 1 15:04:05 2011")
+	validFor  = flag.Duration("duration", 365*24*time.Hour, "Duration that certificate is valid for")
+	isCA      = flag.Bool("ca", false, "whether this cert should be its own Certificate Authority")
+	rsaBits   = flag.Int("rsa-bits", 2048, "Size of RSA key to generate. Ignored if --ecdsa-curve is set")
+)
+
 func generateTemplate(privateKeyType, host, dir string, isCA, isClient, isServer bool) {
 	template := x509.Certificate{
 		Subject: pkix.Name{
 			Organization: []string{"Acme Co"},
+			//CommonName:   "host.docker.internal",
 		},
+		SubjectKeyId:          []byte{1, 2, 3, 4, 6},
 		BasicConstraintsValid: true,
 	}
 
@@ -41,13 +52,12 @@ func generateTemplate(privateKeyType, host, dir string, isCA, isClient, isServer
 
 	// 生效时间，过期时间
 	template.NotBefore = time.Now()
-	template.NotAfter = time.Now().AddDate(10, 0, 0)
+	template.NotAfter = time.Now().AddDate(0, 13, 0)
 
+	// SAN(Subject Alternative Name) 是 SSL 标准 x509 中定义的一个扩展。
+	// 使用了 SAN 字段的 SSL 证书，可以扩展此证书支持的域名，使得一个证书可以支持多个不同域名的解析。
 	hosts := strings.Split(host, ",")
 	for _, h := range hosts {
-		if h == "" {
-			continue
-		}
 		if ip := net.ParseIP(h); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
 		} else {
@@ -167,6 +177,7 @@ func generateSerialNumber() *big.Int {
 }
 
 func generateRsaPrivateKey() *rsa.PrivateKey {
+	// 通过rsa算法生成2048位长度的秘钥
 	rsaBits := 2048
 	privateKey, _ := rsa.GenerateKey(rand.Reader, rsaBits)
 	return privateKey
@@ -221,16 +232,19 @@ func publicKey(privateKey interface{}) interface{} {
 
 func generate() {
 	privateKeyType := "RSA"
-	host := "127.0.0.1"
+	host := "host.docker.internal,localhost,::,127.0.0.1,192.168.1.6"
+	dir := "./certs/"
 
 	// CA
-	generateTemplate(privateKeyType, host, "./certs/", true, false, false)
+	generateTemplate(privateKeyType, host, dir, true, false, false)
 	// client
-	generateTemplate(privateKeyType, host, "./certs/", true, true, false)
+	generateTemplate(privateKeyType, host, dir, false, true, false)
 	// server
-	generateTemplate(privateKeyType, host, "./certs/", true, false, true)
+	generateTemplate(privateKeyType, host, dir, false, false, true)
 }
 
 func main() {
+	flag.Parse()
+
 	generate()
 }

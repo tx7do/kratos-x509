@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	GRPC "google.golang.org/grpc"
-	"io/ioutil"
-	"log"
-	"path/filepath"
 
 	v1 "kratos-x509/api/admin/v1"
 )
@@ -18,7 +19,7 @@ import (
 // newCertPool creates x509 certPool with provided CA file
 func newCertPool(CAFile string) (*x509.CertPool, error) {
 	certPool := x509.NewCertPool()
-	pemByte, err := ioutil.ReadFile(CAFile)
+	pemByte, err := os.ReadFile(CAFile)
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +46,8 @@ func newCertPool(CAFile string) (*x509.CertPool, error) {
 func NewTlsConfig(keyFile, certFile, caFile string) *tls.Config {
 	var cfg tls.Config
 	cfg.InsecureSkipVerify = true
+	cfg.MinVersion = tls.VersionTLS13
+	//cfg.ServerName = "host.docker.internal"
 
 	if caFile != "" {
 		cp, err := newCertPool(caFile)
@@ -94,6 +97,13 @@ func callHTTP(endpoint string, tlsConf *tls.Config) {
 		}
 		log.Printf("[http] User Register Result: %v\n", reply)
 	}
+	{
+		reply, err := client.GetUser(context.Background(), nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("[http] Get User Result: %v\n", reply)
+	}
 
 	//{
 	//	reply, err := client.Login(context.Background(), &v1.LoginReq{UserName: "kratos"})
@@ -139,5 +149,5 @@ func main() {
 	dir, _ := filepath.Abs("./certs/")
 	log.Printf("dir: %s\n", dir)
 	callHTTP("https://127.0.0.1:8000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
-	callGRPC("127.0.0.1:9000", NewTlsConfig("", "", dir+"/ca.crt"))
+	callGRPC("192.168.1.6:9000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
 }
