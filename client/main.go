@@ -139,5 +139,5 @@ func main() {
 	dir, _ := filepath.Abs("./certs/")
 	log.Printf("dir: %s\n", dir)
 	callHTTP("https://127.0.0.1:8000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
-	callGRPC("127.0.0.1:9000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
+	callGRPC("127.0.0.1:9000", NewTlsConfig("", "", dir+"/ca.crt"))
 }
