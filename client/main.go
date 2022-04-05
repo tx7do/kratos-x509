@@ -95,13 +95,13 @@ func callHTTP(endpoint string, tlsConf *tls.Config) {
 		log.Printf("[http] User Register Result: %v\n", reply)
 	}
 
-	{
-		reply, err := client.Login(context.Background(), &v1.LoginReq{UserName: "kratos"})
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("[http] User Logon Result: %v\n", reply)
-	}
+	//{
+	//	reply, err := client.Login(context.Background(), &v1.LoginReq{UserName: "kratos"})
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	log.Printf("[http] User Logon Result: %v\n", reply)
+	//}
 }
 
 func callGRPC(endpoint string, tlsConf *tls.Config) {
@@ -139,5 +139,5 @@ func main() {
 	dir, _ := filepath.Abs("./certs/")
 	log.Printf("dir: %s\n", dir)
 	callHTTP("https://127.0.0.1:8000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
-	//callGRPC(NewTlsConfig("certs/server.key", "certs/server.crt", "certs/ca.crt"))
+	callGRPC("127.0.0.1:9000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
 }

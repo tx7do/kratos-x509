@@ -23,8 +23,9 @@ func initApp(confServer *conf.Server, registry *conf.Registry, logger log.Logger
 	userServiceClient := data.NewUserServiceClient(discovery)
 	adminService := service.NewAdminService(userServiceClient, logger)
 	httpServer := server.NewHTTPServer(confServer, logger, adminService)
+	grpcServer := server.NewGRPCServer(confServer, logger, adminService)
 	registrar := server.NewRegistrar(registry)
-	app := newApp(logger, httpServer, registrar)
+	app := newApp(logger, httpServer, grpcServer, registrar)
 	return app, func() {
 	}, nil
 }

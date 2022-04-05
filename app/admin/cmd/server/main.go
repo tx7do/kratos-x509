@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"kratos-x509/app/admin/internal/conf"
 	"kratos-x509/pkg/util/bootstrap"
 
@@ -26,7 +27,7 @@ func init() {
 	Flags.Init()
 }
 
-func newApp(logger log.Logger, hs *http.Server, rr registry.Registrar) *kratos.App {
+func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, rr registry.Registrar) *kratos.App {
 	return kratos.New(
 		kratos.ID(Service.GetInstanceId()),
 		kratos.Name(Service.Name),
@@ -35,6 +36,7 @@ func newApp(logger log.Logger, hs *http.Server, rr registry.Registrar) *kratos.A
 		kratos.Logger(logger),
 		kratos.Server(
 			hs,
+			gs,
 		),
 		kratos.Registrar(rr),
 	)
