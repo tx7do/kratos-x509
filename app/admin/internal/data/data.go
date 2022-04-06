@@ -70,7 +70,7 @@ func NewUserServiceClient(r registry.Discovery) userV1.UserServiceClient {
 			recovery.Recovery(),
 		),
 		grpc.WithTimeout(2*time.Second),
-		grpc.WithTLSConfig(bootstrap.NewClientTlsConfig("", "", dir+"/ca.crt")),
+		grpc.WithTLSConfig(bootstrap.NewClientTlsConfig("", "", "")),
 	)
 	if err != nil {
 		panic(err)

@@ -25,7 +25,7 @@ func NewGRPCServer(c *conf.Server, logger log.Logger, s *service.AdminService) *
 			tracing.Server(),
 			logging.Server(logger),
 		),
-		grpc.TLSConfig(bootstrap.NewServerTlsConfig(dir+"/server.key", dir+"/server.crt", dir+"/ca.crt")),
+		grpc.TLSConfig(bootstrap.NewServerTlsConfig(dir+"/server.key", dir+"/server.crt", "")),
 	}
 	if c.Grpc.Network != "" {
 		opts = append(opts, grpc.Network(c.Grpc.Network))

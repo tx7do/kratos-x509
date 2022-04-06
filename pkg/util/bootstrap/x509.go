@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"os"
@@ -38,7 +39,7 @@ func (info TLSInfo) ServerConfig() (*tls.Config, error) {
 	var cfg tls.Config
 	cfg.InsecureSkipVerify = info.InsecureSkipVerify
 	//cfg.ServerName = "host.docker.internal"
-	cfg.MinVersion = tls.VersionTLS13
+	//cfg.MinVersion = tls.VersionTLS13
 
 	tlsCert, err := tls.LoadX509KeyPair(info.CertFile, info.KeyFile)
 	if err != nil {
@@ -67,19 +68,9 @@ func (info TLSInfo) ServerConfig() (*tls.Config, error) {
 
 func (info TLSInfo) ClientConfig() (*tls.Config, error) {
 	var cfg tls.Config
-	cfg.InsecureSkipVerify = info.InsecureSkipVerify
+	//cfg.InsecureSkipVerify = info.InsecureSkipVerify
 	//cfg.ServerName = "host.docker.internal"
-	cfg.MinVersion = tls.VersionTLS13
-
-	if info.CAFile != "" {
-		cp, err := newCertPool(info.CAFile)
-		if err != nil {
-			log.Fatalln("read cert file error:", err)
-			return nil, err
-		}
-
-		cfg.RootCAs = cp
-	}
+	//cfg.MinVersion = tls.VersionTLS13
 
 	if info.KeyFile == "" || info.CertFile == "" {
 		return &cfg, nil
@@ -93,6 +84,16 @@ func (info TLSInfo) ClientConfig() (*tls.Config, error) {
 
 	cfg.Certificates = []tls.Certificate{tlsCert}
 
+	if info.CAFile != "" {
+		cp, err := newCertPool(info.CAFile)
+		if err != nil {
+			log.Fatalln("read cert file error:", err)
+			return nil, err
+		}
+
+		cfg.RootCAs = cp
+	}
+
 	return &cfg, nil
 }
 
@@ -104,23 +105,23 @@ func newCertPool(caFile string) (*x509.CertPool, error) {
 		return nil, err
 	}
 
-	//for {
-	//	var block *pem.Block
-	//	block, pemByte = pem.Decode(pemByte)
-	//	if block == nil {
-	//		return certPool, nil
-	//	}
-	//	cert, err := x509.ParseCertificate(block.Bytes)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	certPool.AddCert(cert)
-	//}
-
-	if !certPool.AppendCertsFromPEM(pemByte) {
-		return nil, fmt.Errorf("can't add CA cert")
+	for {
+		var block *pem.Block
+		block, pemByte = pem.Decode(pemByte)
+		if block == nil {
+			return certPool, nil
+		}
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		certPool.AddCert(cert)
 	}
-	return certPool, nil
+
+	//if !certPool.AppendCertsFromPEM(pemByte) {
+	//	return nil, fmt.Errorf("can't add CA cert")
+	//}
+	//return certPool, nil
 }
 
 // NewServerTlsConfig 创建服务端TLS证书认证配置

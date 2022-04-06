@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"crypto/x509"
-	"fmt"
+	"kratos-x509/pkg/util/bootstrap"
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -15,62 +13,6 @@ import (
 
 	v1 "kratos-x509/api/admin/v1"
 )
-
-// newCertPool creates x509 certPool with provided CA file
-func newCertPool(CAFile string) (*x509.CertPool, error) {
-	certPool := x509.NewCertPool()
-	pemByte, err := os.ReadFile(CAFile)
-	if err != nil {
-		return nil, err
-	}
-
-	//for {
-	//	var block *pem.Block
-	//	block, pemByte = pem.Decode(pemByte)
-	//	if block == nil {
-	//		return certPool, nil
-	//	}
-	//	cert, err := x509.ParseCertificate(block.Bytes)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	certPool.AddCert(cert)
-	//}
-
-	if !certPool.AppendCertsFromPEM(pemByte) {
-		return nil, fmt.Errorf("can't add CA cert")
-	}
-	return certPool, nil
-}
-
-func NewTlsConfig(keyFile, certFile, caFile string) *tls.Config {
-	var cfg tls.Config
-	cfg.InsecureSkipVerify = true
-	cfg.MinVersion = tls.VersionTLS13
-	//cfg.ServerName = "host.docker.internal"
-
-	if caFile != "" {
-		cp, err := newCertPool(caFile)
-		if err != nil {
-			return nil
-		}
-
-		cfg.RootCAs = cp
-	}
-
-	if keyFile == "" || certFile == "" {
-		return &cfg
-	}
-
-	tlsCert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil
-	}
-
-	cfg.Certificates = []tls.Certificate{tlsCert}
-
-	return &cfg
-}
 
 func callHTTP(endpoint string, tlsConf *tls.Config) {
 	conn, err := http.NewClient(
@@ -148,6 +90,7 @@ func callGRPC(endpoint string, tlsConf *tls.Config) {
 func main() {
 	dir, _ := filepath.Abs("./certs/")
 	log.Printf("dir: %s\n", dir)
-	callHTTP("https://127.0.0.1:8000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
-	callGRPC("192.168.1.6:9000", NewTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
+	//callHTTP("https://host.docker.internal:8000", bootstrap.NewClientTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
+	callHTTP("https://host.docker.internal:8000", bootstrap.NewClientTlsConfig("", "", ""))
+	callGRPC("127.0.0.1:9000", bootstrap.NewClientTlsConfig(dir+"/client.key", dir+"/client.crt", dir+"/ca.crt"))
 }
